@@ -1,0 +1,11 @@
+[project]
+name = "genai"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "langchain>=0.3.30",
+    "langchain-anthropic>=0.3.22",
+    "langchain-community>=0.3.31",
+]
