@@ -15,7 +15,7 @@ from app.ingestion.pagination import detect_next_url, detect_pagination, render_
 IngestSink = Callable[[IngestionPayload], Awaitable[None]]
 
 
-async def _noop_sink(payload: IngestionPayload) -> None:
+async def noop_sink(payload: IngestionPayload) -> None:
     return None
 
 
@@ -24,7 +24,7 @@ async def ingest_url(
     url: str,
     store: JobStore,
     client: httpx.AsyncClient,
-    sink: IngestSink = _noop_sink,
+    sink: IngestSink = noop_sink,
     settings: Settings = default_settings,
 ) -> None:
     try:

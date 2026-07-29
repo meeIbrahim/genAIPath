@@ -8,12 +8,13 @@ from fastapi import APIRouter, HTTPException
 
 from app.ingestion.job_store import JobStore
 from app.ingestion.models import IngestRequest, IngestResponse, JobStatusResponse
-from app.ingestion.worker import ingest_url
+from app.ingestion.worker import IngestSink, ingest_url, noop_sink
 
 
 def build_ingestion_router(
     store: JobStore,
     client_factory: Callable[[], httpx.AsyncClient] = httpx.AsyncClient,
+    sink: IngestSink = noop_sink,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -29,7 +30,7 @@ def build_ingestion_router(
                 # itself never raises and triggers an early client.aclose() while
                 # sibling URLs in the same job are still in flight.
                 await asyncio.gather(
-                    *(ingest_url(job_id, url, store, client) for url in request.urls),
+                    *(ingest_url(job_id, url, store, client, sink=sink) for url in request.urls),
                     return_exceptions=True,
                 )
             finally:
