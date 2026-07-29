@@ -37,4 +37,4 @@ class InMemoryBM25Index:
             return []
         scores = self._bm25.get_scores(tokenize(query))
         ranked = sorted(zip(self._chunk_ids, scores), key=lambda pair: pair[1], reverse=True)
-        return [(chunk_id, float(score)) for chunk_id, score in ranked[:top_k]]
+        return [(chunk_id, float(score)) for chunk_id, score in ranked[:top_k] if score != 0]
