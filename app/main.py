@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import httpx
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import Settings, settings
@@ -37,6 +38,10 @@ def create_app(app_settings: Settings = settings) -> FastAPI:
     )
 
     app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+    @app.get("/")
+    async def serve_ingest_page() -> FileResponse:
+        return FileResponse("app/static/ingest.html")
 
     return app
 
