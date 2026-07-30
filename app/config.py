@@ -17,7 +17,7 @@ class Settings:
     qdrant_collection: str = "rag_chunks"
     vector_size: int = 1024
     retrieval_top_k: int = 20
-    display_top_k: int = 5
+    display_top_k: int = 8
     rrf_k: int = 60
     synthesis_context_budget: int = 6
     groq_model: str = "openai/gpt-oss-120b"

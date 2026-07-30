@@ -31,7 +31,7 @@ def test_retrieval_and_synthesis_defaults(monkeypatch):
     importlib.reload(config_module)
 
     assert config_module.settings.retrieval_top_k == 20
-    assert config_module.settings.display_top_k == 5
+    assert config_module.settings.display_top_k == 8
     assert config_module.settings.rrf_k == 60
     assert config_module.settings.synthesis_context_budget == 6
     assert config_module.settings.groq_model == "openai/gpt-oss-120b"
