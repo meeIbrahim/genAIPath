@@ -11,8 +11,19 @@ function matchesFilter(chunk, filter) {
 function scrollToChunkByMarker(marker) {
   const chunkId = citationsByMarker[marker];
   if (!chunkId) return;
-  const card = document.querySelector(`[data-chunk-id="${chunkId}"]`);
-  if (!card) return;
+  let card = document.querySelector(`[data-chunk-id="${chunkId}"]`);
+
+  // If card is filtered out, reset filter to "all" and re-render
+  if (!card) {
+    currentFilter = "all";
+    for (const btn of document.querySelectorAll("#filter-toggle button")) {
+      btn.setAttribute("aria-pressed", String(btn.dataset.filter === "all"));
+    }
+    renderChunks();
+    card = document.querySelector(`[data-chunk-id="${chunkId}"]`);
+  }
+
+  if (!card) return; // Still not found (shouldn't happen with valid citationsByMarker)
   card.scrollIntoView({ behavior: "smooth", block: "center" });
   card.classList.add("highlight");
   setTimeout(() => card.classList.remove("highlight"), 1500);
