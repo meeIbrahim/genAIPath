@@ -22,3 +22,17 @@ def test_indexing_defaults():
     assert settings.qdrant_url is None
     assert settings.qdrant_collection == "rag_chunks"
     assert settings.vector_size == 1024
+
+
+def test_retrieval_and_synthesis_defaults(monkeypatch):
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    import importlib
+    import app.config as config_module
+    importlib.reload(config_module)
+
+    assert config_module.settings.retrieval_top_k == 20
+    assert config_module.settings.display_top_k == 5
+    assert config_module.settings.rrf_k == 60
+    assert config_module.settings.synthesis_context_budget == 6
+    assert config_module.settings.groq_model == "openai/gpt-oss-120b"
+    assert config_module.settings.groq_api_key == ""
