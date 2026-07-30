@@ -76,3 +76,27 @@ async def test_synthesize_answer_raises_on_non_200():
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         with pytest.raises(SynthesisError, match="500"):
             await synthesize_answer("q", [_chunk("c1", "x")], client, settings)
+
+
+async def test_synthesize_answer_raises_on_invalid_json():
+    """Malformed 200 response with invalid JSON should raise SynthesisError."""
+    settings = Settings(groq_api_key="test-key")
+
+    def handler(request):
+        return httpx.Response(200, text="not json")
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(SynthesisError, match="synthesis response missing answer content"):
+            await synthesize_answer("q", [_chunk("c1", "x")], client, settings)
+
+
+async def test_synthesize_answer_raises_on_unexpected_json_shape():
+    """Malformed 200 response with unexpected JSON structure should raise SynthesisError."""
+    settings = Settings(groq_api_key="test-key")
+
+    def handler(request):
+        return httpx.Response(200, json=["unexpected", "shape"])
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(SynthesisError, match="synthesis response missing answer content"):
+            await synthesize_answer("q", [_chunk("c1", "x")], client, settings)

@@ -67,7 +67,7 @@ async def synthesize_answer(
 
     try:
         answer = response.json()["choices"][0]["message"]["content"]
-    except (KeyError, IndexError) as exc:
+    except (KeyError, IndexError, TypeError, ValueError) as exc:
         raise SynthesisError("synthesis response missing answer content") from exc
 
     citations = _extract_citations(answer, context_chunks)
