@@ -43,6 +43,10 @@ def create_app(app_settings: Settings = settings) -> FastAPI:
     async def serve_ingest_page() -> FileResponse:
         return FileResponse("app/static/ingest.html")
 
+    @app.get("/query-ui")
+    async def serve_query_page() -> FileResponse:
+        return FileResponse("app/static/query.html")
+
     return app
 
 
