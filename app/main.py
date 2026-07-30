@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import httpx
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.config import Settings, settings
 from app.indexing.bm25_index import InMemoryBM25Index
@@ -34,6 +35,8 @@ def create_app(app_settings: Settings = settings) -> FastAPI:
             bm25_index, vector_index, chunk_store, embedding_client, synthesis_client, app_settings
         )
     )
+
+    app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
     return app
 

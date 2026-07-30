@@ -1,0 +1,91 @@
+:root {
+  color-scheme: light dark;
+  --border: #888;
+  --muted: #666;
+  --accent: #2b6cb0;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+nav a {
+  margin-right: 1rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.row input[type="text"],
+.row input[type="url"] {
+  flex: 1;
+  padding: 0.4rem;
+}
+
+.stage-badge {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.stage-badge.error {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.stage-badge.done {
+  border-color: #27ae60;
+  color: #27ae60;
+}
+
+.chunk-card {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.chunk-card.used {
+  border-left: 4px solid var(--accent);
+}
+
+.chunk-card.not-used {
+  opacity: 0.7;
+}
+
+.badge {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.75rem;
+  margin-right: 0.4rem;
+}
+
+.filter-toggle button {
+  margin-right: 0.4rem;
+}
+
+.filter-toggle button[aria-pressed="true"] {
+  background: var(--accent);
+  color: white;
+}
+
+.citation-marker {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.highlight {
+  outline: 2px solid var(--accent);
+}
