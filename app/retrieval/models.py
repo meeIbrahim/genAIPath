@@ -32,6 +32,12 @@ class FusedChunk(BaseModel):
     used_in_synthesis: bool = False
 
 
+class JudgeAttempt(BaseModel):
+    attempt: int
+    verdict: str
+    raw_response: str
+
+
 class QueryResponse(BaseModel):
     query: str
     answer: str
@@ -39,3 +45,4 @@ class QueryResponse(BaseModel):
     retrieved_chunks: list[FusedChunk]
     preferences: QueryPreferences
     filtered_out_count: int
+    judge_attempts: list[JudgeAttempt]

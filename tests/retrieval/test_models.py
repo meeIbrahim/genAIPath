@@ -1,5 +1,5 @@
 from app.extraction.preferences import QueryPreferences
-from app.retrieval.models import Citation, FusedChunk, QueryRequest, QueryResponse
+from app.retrieval.models import Citation, FusedChunk, JudgeAttempt, QueryRequest, QueryResponse
 
 
 def test_query_request_top_k_optional():
@@ -42,6 +42,11 @@ def test_fused_chunk_city_and_price_default_none():
     assert chunk.price is None
 
 
+def test_judge_attempt_round_trip():
+    attempt = JudgeAttempt(attempt=1, verdict="context_good", raw_response="context_good")
+    assert attempt.model_dump() == {"attempt": 1, "verdict": "context_good", "raw_response": "context_good"}
+
+
 def test_query_response_round_trip():
     response = QueryResponse(
         query="q",
@@ -50,5 +55,7 @@ def test_query_response_round_trip():
         retrieved_chunks=[],
         preferences=QueryPreferences(),
         filtered_out_count=0,
+        judge_attempts=[JudgeAttempt(attempt=1, verdict="context_good", raw_response="context_good")],
     )
     assert response.model_dump()["citations"][0]["chunk_id"] == "c1"
+    assert response.model_dump()["judge_attempts"][0]["verdict"] == "context_good"
