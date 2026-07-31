@@ -168,7 +168,9 @@ def test_extract_preferences_combines_all_three():
 
 
 def test_extract_preferences_all_none_when_nothing_detected():
-    prefs = extract_preferences("What is the capital of France?")
+    # No GPE, no price signal, no interest keyword — unlike "capital of France",
+    # which spaCy correctly tags "France" as a GPE (so city would NOT be None there).
+    prefs = extract_preferences("What is the square root of 144?")
     assert prefs.city is None
     assert prefs.budget is None
     assert prefs.interests == []
