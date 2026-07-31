@@ -46,6 +46,8 @@ async def retrieve(
             text=metadata_by_id[hit.chunk_id].text,
             source_url=metadata_by_id[hit.chunk_id].source_url,
             page_number=metadata_by_id[hit.chunk_id].page_number,
+            city=metadata_by_id[hit.chunk_id].city,
+            price=metadata_by_id[hit.chunk_id].price,
             bm25_rank=hit.bm25_rank,
             bm25_score=hit.bm25_score,
             semantic_rank=hit.semantic_rank,

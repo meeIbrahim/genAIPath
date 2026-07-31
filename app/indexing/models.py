@@ -14,6 +14,8 @@ class ChunkMetadata(BaseModel):
     overlap_with_prev: int
     indexed_at: str
     text: str
+    city: str | None = None
+    price: float | None = None
 
 
 class IndexResult(BaseModel):

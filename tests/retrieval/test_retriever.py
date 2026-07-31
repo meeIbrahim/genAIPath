@@ -26,6 +26,8 @@ def _seed(tmp_path):
         overlap_with_prev=0,
         indexed_at="2026-07-29T12:00:00+00:00",
         text="the quick brown fox",
+        city="paris",
+        price=500.0,
     )
     bm25.add_documents([chunk_id], ["the quick brown fox"])
     vectors.upsert([chunk_id], [[1.0, 0.0]], [chunk.model_dump()])
@@ -51,6 +53,19 @@ async def test_retrieve_attaches_metadata_and_both_scores(tmp_path):
     assert chunk.bm25_rank == 1
     assert chunk.semantic_rank == 1
     assert chunk.used_in_synthesis is False
+
+
+async def test_retrieve_carries_city_and_price_into_fused_chunk(tmp_path):
+    settings, bm25, vectors, store, chunk_id = _seed(tmp_path)
+
+    def handler(request):
+        return httpx.Response(200, json={"embeddings": [[1.0, 0.0]]})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        results = await retrieve("fox", bm25, vectors, store, client, settings)
+
+    assert results[0].city == "paris"
+    assert results[0].price == 500.0
 
 
 async def test_retrieve_respects_top_k_override(tmp_path):

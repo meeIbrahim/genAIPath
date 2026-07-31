@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 import httpx
 
 from app.config import Settings, settings as default_settings
+from app.extraction.location import extract_city
+from app.extraction.price import extract_price
 from app.indexing.bm25_index import InMemoryBM25Index
 from app.indexing.chunk_store import ChunkStore
 from app.indexing.chunker import chunk_text
@@ -47,6 +49,8 @@ async def index_document(
             overlap_with_prev=text_chunk.overlap_with_prev,
             indexed_at=indexed_at,
             text=text_chunk.text,
+            city=extract_city(text_chunk.text),
+            price=extract_price(text_chunk.text),
         )
         for index, text_chunk in enumerate(text_chunks)
     ]

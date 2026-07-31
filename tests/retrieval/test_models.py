@@ -23,6 +23,24 @@ def test_fused_chunk_defaults_used_in_synthesis_false():
     assert chunk.used_in_synthesis is False
 
 
+def test_fused_chunk_city_and_price_default_none():
+    chunk = FusedChunk(
+        chunk_id="c1",
+        text="hello",
+        source_url="https://example.com",
+        page_number=1,
+        bm25_rank=1,
+        bm25_score=8.3,
+        semantic_rank=None,
+        semantic_score=None,
+        fused_rank=1,
+        rrf_score=0.016,
+        matched_methods=["bm25"],
+    )
+    assert chunk.city is None
+    assert chunk.price is None
+
+
 def test_query_response_round_trip():
     response = QueryResponse(
         query="q",

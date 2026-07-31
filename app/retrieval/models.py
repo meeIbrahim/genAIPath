@@ -18,6 +18,8 @@ class FusedChunk(BaseModel):
     text: str
     source_url: str
     page_number: int
+    city: str | None = None
+    price: float | None = None
     bm25_rank: int | None
     bm25_score: float | None
     semantic_rank: int | None
