@@ -29,6 +29,26 @@ function scrollToChunkByMarker(marker) {
   setTimeout(() => card.classList.remove("highlight"), 1500);
 }
 
+function renderPreferences(preferences) {
+  const container = document.getElementById("preferences");
+  container.innerHTML = "";
+  const entries = [];
+  if (preferences.city) entries.push(`City: ${preferences.city}`);
+  if (preferences.budget != null) entries.push(`Budget: <= ${preferences.budget}`);
+  if (preferences.interests.length > 0) entries.push(`Interests: ${preferences.interests.join(", ")}`);
+  for (const entry of entries) {
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    badge.textContent = entry;
+    container.appendChild(badge);
+  }
+}
+
+function renderFilteredNote(count) {
+  const container = document.getElementById("filtered-note");
+  container.textContent = count > 0 ? `${count} chunk(s) excluded by filter` : "";
+}
+
 function renderAnswer(answer) {
   const container = document.getElementById("answer");
   container.innerHTML = "";
@@ -100,6 +120,8 @@ document.getElementById("ask").onclick = async () => {
   const result = await postQuery(query);
   lastChunks = result.retrieved_chunks;
   citationsByMarker = Object.fromEntries(result.citations.map((c) => [String(c.marker), c.chunk_id]));
+  renderPreferences(result.preferences);
+  renderFilteredNote(result.filtered_out_count);
   renderAnswer(result.answer);
   renderChunks();
 };

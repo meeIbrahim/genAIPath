@@ -21,3 +21,5 @@ def test_query_page_served(tmp_path):
     assert response.status_code == 200
     assert "Ask a question" in response.text
     assert '/static/js/query.js' in response.text
+    assert 'id="preferences"' in response.text
+    assert 'id="filtered-note"' in response.text

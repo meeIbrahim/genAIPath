@@ -89,3 +89,13 @@ nav a {
 .highlight {
   outline: 2px solid var(--accent);
 }
+
+#preferences {
+  margin-bottom: 0.5rem;
+}
+
+#filtered-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
