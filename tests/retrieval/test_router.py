@@ -304,3 +304,61 @@ def test_post_query_returns_fallback_after_two_insufficient_judgments(tmp_path):
     assert body["citations"] == []
     assert all(not c["used_in_synthesis"] for c in body["retrieved_chunks"])
     assert synthesis_call_count["n"] == 0
+
+
+def test_post_query_falls_back_when_judge_call_raises_judge_error(tmp_path):
+    # Exercises _judge_safely's except JudgeError branch at the router/integration
+    # level (not just judge_context's own unit tests): the judge endpoint returns a
+    # non-200 status, which makes judge_context raise JudgeError. The router must
+    # absorb that exception (both on the initial call and the retry) rather than
+    # letting it propagate as a 500, and land on the same fallback path as an
+    # explicit "context_insufficient" verdict.
+    settings = Settings(
+        qdrant_path=str(tmp_path / "qdrant"),
+        qdrant_collection="t5",
+        vector_size=2,
+        groq_api_key="test-key",
+    )
+    bm25 = InMemoryBM25Index()
+    vectors = QdrantVectorIndex(settings)
+    store = ChunkStore()
+
+    chunk_id = "66666666-6666-6666-6666-666666666666"
+    chunk = ChunkMetadata(
+        chunk_id=chunk_id, doc_id="d1", source_url="https://example.com", page_number=1,
+        chunk_index=0, char_start=0, char_end=10, overlap_with_prev=0,
+        indexed_at="2026-07-29T12:00:00+00:00", text="the quick brown fox",
+    )
+    bm25.add_documents([chunk_id], ["the quick brown fox"])
+    vectors.upsert([chunk_id], [[1.0, 0.0]], [chunk.model_dump()])
+    store.add([chunk])
+
+    def embed_handler(request):
+        return httpx.Response(200, json={"embeddings": [[1.0, 0.0]]})
+
+    synthesis_call_count = {"n": 0}
+
+    def groq_handler(request):
+        body = json.loads(request.read())
+        if body["model"] == settings.judge_model:
+            return httpx.Response(500, json={"error": "judge is down"})
+        synthesis_call_count["n"] += 1
+        return httpx.Response(200, json={"choices": [{"message": {"content": "should not be called"}}]})
+
+    embedding_client = httpx.AsyncClient(transport=httpx.MockTransport(embed_handler))
+    synthesis_client = httpx.AsyncClient(transport=httpx.MockTransport(groq_handler))
+
+    app = FastAPI()
+    app.include_router(build_retrieval_router(bm25, vectors, store, embedding_client, synthesis_client, settings))
+
+    with TestClient(app) as client:
+        response = client.post("/query", json={"query": "tell me about the fox"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["answer"] == (
+        "I don't have enough reliable information in the indexed content to answer this question confidently."
+    )
+    assert body["citations"] == []
+    assert all(not c["used_in_synthesis"] for c in body["retrieved_chunks"])
+    assert synthesis_call_count["n"] == 0
