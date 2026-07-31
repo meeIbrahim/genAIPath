@@ -66,6 +66,9 @@ def test_post_query_returns_answer_with_citations_and_chunks(tmp_path):
     assert body["citations"] == [{"marker": 1, "chunk_id": chunk_id}]
     assert body["retrieved_chunks"][0]["chunk_id"] == chunk_id
     assert body["retrieved_chunks"][0]["used_in_synthesis"] is True
+    assert body["judge_attempts"] == [
+        {"attempt": 1, "verdict": "context_good", "raw_response": "context_good"}
+    ]
 
 
 def test_post_query_default_settings_marks_overflow_chunks_not_used_in_synthesis(tmp_path):
@@ -139,6 +142,9 @@ def test_post_query_default_settings_marks_overflow_chunks_not_used_in_synthesis
     assert used_flags[6:] == [False] * 2
     assert any(flag is True for flag in used_flags)
     assert any(flag is False for flag in used_flags)
+    assert body["judge_attempts"] == [
+        {"attempt": 1, "verdict": "context_good", "raw_response": "context_good"}
+    ]
 
 
 def _judge_good_and_synthesis_handler(answer_content: str, judge_model: str):
@@ -202,6 +208,9 @@ def test_post_query_includes_preferences_and_filtered_out_count(tmp_path):
     assert body["preferences"]["city"] == "lahore"
     assert body["filtered_out_count"] == 1
     assert [c["chunk_id"] for c in body["retrieved_chunks"]] == [kept_id]
+    assert body["judge_attempts"] == [
+        {"attempt": 1, "verdict": "context_good", "raw_response": "context_good"}
+    ]
 
 
 def test_post_query_retries_once_then_succeeds_when_judge_recovers(tmp_path):
@@ -252,6 +261,10 @@ def test_post_query_retries_once_then_succeeds_when_judge_recovers(tmp_path):
     body = response.json()
     assert body["answer"] == "The fox is quick [1]."
     assert judge_call_count["n"] == 2
+    assert body["judge_attempts"] == [
+        {"attempt": 1, "verdict": "context_insufficient", "raw_response": "context_insufficient"},
+        {"attempt": 2, "verdict": "context_good", "raw_response": "context_good"},
+    ]
 
 
 def test_post_query_returns_fallback_after_two_insufficient_judgments(tmp_path):
@@ -304,6 +317,10 @@ def test_post_query_returns_fallback_after_two_insufficient_judgments(tmp_path):
     assert body["citations"] == []
     assert all(not c["used_in_synthesis"] for c in body["retrieved_chunks"])
     assert synthesis_call_count["n"] == 0
+    assert body["judge_attempts"] == [
+        {"attempt": 1, "verdict": "context_insufficient", "raw_response": "context_insufficient"},
+        {"attempt": 2, "verdict": "context_insufficient", "raw_response": "context_insufficient"},
+    ]
 
 
 def test_post_query_falls_back_when_judge_call_raises_judge_error(tmp_path):
@@ -362,3 +379,53 @@ def test_post_query_falls_back_when_judge_call_raises_judge_error(tmp_path):
     assert body["citations"] == []
     assert all(not c["used_in_synthesis"] for c in body["retrieved_chunks"])
     assert synthesis_call_count["n"] == 0
+    assert len(body["judge_attempts"]) == 2
+    assert all(a["verdict"] == "context_insufficient" for a in body["judge_attempts"])
+    assert all("(judge error:" in a["raw_response"] for a in body["judge_attempts"])
+    assert [a["attempt"] for a in body["judge_attempts"]] == [1, 2]
+
+
+def test_post_query_judge_attempts_has_one_entry_when_no_retry_needed(tmp_path):
+    # Explicit single-attempt-shape test, distinct from the retry tests above:
+    # confirms judge_attempts has exactly ONE entry (not a stray second one) when
+    # the first judge call already returns context_good.
+    settings = Settings(
+        qdrant_path=str(tmp_path / "qdrant"),
+        qdrant_collection="t6",
+        vector_size=2,
+        groq_api_key="test-key",
+    )
+    bm25 = InMemoryBM25Index()
+    vectors = QdrantVectorIndex(settings)
+    store = ChunkStore()
+
+    chunk_id = "77777777-7777-7777-7777-777777777777"
+    chunk = ChunkMetadata(
+        chunk_id=chunk_id, doc_id="d1", source_url="https://example.com", page_number=1,
+        chunk_index=0, char_start=0, char_end=10, overlap_with_prev=0,
+        indexed_at="2026-07-29T12:00:00+00:00", text="the quick brown fox",
+    )
+    bm25.add_documents([chunk_id], ["the quick brown fox"])
+    vectors.upsert([chunk_id], [[1.0, 0.0]], [chunk.model_dump()])
+    store.add([chunk])
+
+    def embed_handler(request):
+        return httpx.Response(200, json={"embeddings": [[1.0, 0.0]]})
+
+    embedding_client = httpx.AsyncClient(transport=httpx.MockTransport(embed_handler))
+    synthesis_client = httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            _judge_good_and_synthesis_handler("The fox is quick [1].", settings.judge_model)
+        )
+    )
+
+    app = FastAPI()
+    app.include_router(build_retrieval_router(bm25, vectors, store, embedding_client, synthesis_client, settings))
+
+    with TestClient(app) as client:
+        response = client.post("/query", json={"query": "tell me about the fox"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["judge_attempts"]) == 1
+    assert body["judge_attempts"][0]["attempt"] == 1

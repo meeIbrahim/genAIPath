@@ -12,7 +12,7 @@ from app.indexing.chunk_store import ChunkStore
 from app.indexing.vector_index import QdrantVectorIndex
 from app.retrieval.filtering import filter_chunks
 from app.retrieval.judge import JudgeError, JudgeVerdict, judge_context
-from app.retrieval.models import FusedChunk, QueryRequest, QueryResponse
+from app.retrieval.models import FusedChunk, JudgeAttempt, QueryRequest, QueryResponse
 from app.retrieval.retriever import retrieve
 from app.retrieval.synthesis import synthesize_answer
 
@@ -49,6 +49,7 @@ def build_retrieval_router(
         )
         kept_chunks, filtered_out_count = filter_chunks(fused_chunks, preferences)
         verdict = await _judge_safely(request.query, kept_chunks, synthesis_client, settings)
+        judge_attempts = [JudgeAttempt(attempt=1, verdict=verdict.verdict, raw_response=verdict.raw_response)]
 
         if verdict.verdict == "context_insufficient":
             retry_settings = dataclasses.replace(
@@ -61,6 +62,9 @@ def build_retrieval_router(
             )
             kept_chunks, filtered_out_count = filter_chunks(fused_chunks, preferences)
             verdict = await _judge_safely(request.query, kept_chunks, synthesis_client, retry_settings)
+            judge_attempts.append(
+                JudgeAttempt(attempt=2, verdict=verdict.verdict, raw_response=verdict.raw_response)
+            )
 
         if verdict.verdict == "context_insufficient":
             for chunk in kept_chunks:
@@ -72,6 +76,7 @@ def build_retrieval_router(
                 retrieved_chunks=kept_chunks,
                 preferences=preferences,
                 filtered_out_count=filtered_out_count,
+                judge_attempts=judge_attempts,
             )
 
         answer, citations, used_chunk_ids = await synthesize_answer(
@@ -87,6 +92,7 @@ def build_retrieval_router(
             retrieved_chunks=kept_chunks,
             preferences=preferences,
             filtered_out_count=filtered_out_count,
+            judge_attempts=judge_attempts,
         )
 
     return router
