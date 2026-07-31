@@ -4,7 +4,7 @@ import re
 
 _PRICE_RE = re.compile(
     r"\$\s?(?P<dollar>\d[\d,]*\.?\d*)(?P<dollar_k>[kK])?"
-    r"|(?:under|less than|budget of|budget is|around|for)\s+\$?\s?(?P<qualified>\d[\d,]*\.?\d*)(?P<qualified_k>[kK])?"
+    r"|(?:under|less than|budget of|budget is|around)\s+\$?\s?(?P<qualified>\d[\d,]*\.?\d*)(?P<qualified_k>[kK])?"
     r"|(?P<bare_k>\d[\d,]*\.?\d*)\s?[kK]\b",
     re.IGNORECASE,
 )

@@ -15,3 +15,10 @@ def test_extract_price_comma_separated():
 
 def test_extract_price_returns_none_when_absent():
     assert extract_price("I want a nice hotel in Lahore") is None
+
+
+def test_extract_price_ignores_bare_for_preposition():
+    # Regression: "for" removed from qualifier-words to prevent false positives
+    assert extract_price("A room for 2 nights in Lahore") is None
+    assert extract_price("Book a table for 3 people") is None
+    assert extract_price("Stay for 5 nights please") is None
