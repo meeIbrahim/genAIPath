@@ -24,6 +24,7 @@ class Settings:
     groq_base_url: str = "https://api.groq.com/openai/v1"
     groq_api_key: str = field(default_factory=lambda: os.environ.get("GROQ_API_KEY", ""))
     judge_model: str = "llama-3.1-8b-instant"
+    judge_retry_top_k_multiplier: int = 2
 
 
 settings = Settings()

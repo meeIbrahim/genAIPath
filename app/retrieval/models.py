@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
+from app.extraction.preferences import QueryPreferences
+
 
 class QueryRequest(BaseModel):
     query: str
@@ -35,3 +37,5 @@ class QueryResponse(BaseModel):
     answer: str
     citations: list[Citation]
     retrieved_chunks: list[FusedChunk]
+    preferences: QueryPreferences
+    filtered_out_count: int

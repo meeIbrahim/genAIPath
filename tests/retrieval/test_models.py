@@ -1,3 +1,4 @@
+from app.extraction.preferences import QueryPreferences
 from app.retrieval.models import Citation, FusedChunk, QueryRequest, QueryResponse
 
 
@@ -47,5 +48,7 @@ def test_query_response_round_trip():
         answer="answer [1]",
         citations=[Citation(marker=1, chunk_id="c1")],
         retrieved_chunks=[],
+        preferences=QueryPreferences(),
+        filtered_out_count=0,
     )
     assert response.model_dump()["citations"][0]["chunk_id"] == "c1"
