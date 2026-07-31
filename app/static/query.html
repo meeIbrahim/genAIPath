@@ -8,21 +8,26 @@
 <body>
   <nav><a href="/">Ingest</a><a href="/query-ui">Query</a></nav>
   <h1>Ask a question</h1>
-  <div class="row">
-    <input id="query-input" type="text" placeholder="What do you want to know?" />
-    <button id="ask">Ask</button>
-  </div>
-  <div id="preferences"></div>
-  <div id="answer"></div>
+  <div class="page-layout">
+    <div class="main-column">
+      <div class="row">
+        <input id="query-input" type="text" placeholder="What do you want to know?" />
+        <button id="ask">Ask</button>
+      </div>
+      <div id="preferences"></div>
+      <div id="answer"></div>
 
-  <div class="filter-toggle" id="filter-toggle">
-    <button data-filter="all" aria-pressed="true">All</button>
-    <button data-filter="bm25" aria-pressed="false">BM25-only</button>
-    <button data-filter="semantic" aria-pressed="false">Semantic-only</button>
-    <button data-filter="both" aria-pressed="false">Both</button>
+      <div class="filter-toggle" id="filter-toggle">
+        <button data-filter="all" aria-pressed="true">All</button>
+        <button data-filter="bm25" aria-pressed="false">BM25-only</button>
+        <button data-filter="semantic" aria-pressed="false">Semantic-only</button>
+        <button data-filter="both" aria-pressed="false">Both</button>
+      </div>
+      <div id="filtered-note"></div>
+      <div id="chunks"></div>
+    </div>
+    <aside id="judge-panel"></aside>
   </div>
-  <div id="filtered-note"></div>
-  <div id="chunks"></div>
 
   <script src="/static/js/api.js"></script>
   <script src="/static/js/query.js"></script>

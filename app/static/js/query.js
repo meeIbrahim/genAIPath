@@ -104,6 +104,25 @@ function renderChunks() {
   }
 }
 
+function renderJudgePanel(judgeAttempts) {
+  const container = document.getElementById("judge-panel");
+  container.innerHTML = "";
+  for (const attempt of judgeAttempts) {
+    const block = document.createElement("div");
+    block.className = "judge-attempt";
+
+    const heading = document.createElement("h3");
+    heading.textContent = `Attempt ${attempt.attempt}: ${attempt.verdict}`;
+
+    const raw = document.createElement("p");
+    raw.textContent = attempt.raw_response;
+
+    block.appendChild(heading);
+    block.appendChild(raw);
+    container.appendChild(block);
+  }
+}
+
 document.getElementById("filter-toggle").addEventListener("click", (event) => {
   const button = event.target.closest("button[data-filter]");
   if (!button) return;
@@ -122,6 +141,7 @@ document.getElementById("ask").onclick = async () => {
   citationsByMarker = Object.fromEntries(result.citations.map((c) => [String(c.marker), c.chunk_id]));
   renderPreferences(result.preferences);
   renderFilteredNote(result.filtered_out_count);
+  renderJudgePanel(result.judge_attempts);
   renderAnswer(result.answer);
   renderChunks();
 };

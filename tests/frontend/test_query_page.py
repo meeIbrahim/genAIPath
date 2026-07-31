@@ -23,3 +23,4 @@ def test_query_page_served(tmp_path):
     assert '/static/js/query.js' in response.text
     assert 'id="preferences"' in response.text
     assert 'id="filtered-note"' in response.text
+    assert 'id="judge-panel"' in response.text
