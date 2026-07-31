@@ -34,6 +34,7 @@ async def test_judge_context_returns_good_verdict():
         verdict = await judge_context("capital of France?", chunks, client, settings)
 
     assert verdict.verdict == "context_good"
+    assert verdict.raw_response == "context_good"
 
 
 async def test_judge_context_returns_insufficient_verdict():
@@ -46,6 +47,7 @@ async def test_judge_context_returns_insufficient_verdict():
         verdict = await judge_context("capital of France?", chunks, client, settings)
 
     assert verdict.verdict == "context_insufficient"
+    assert verdict.raw_response == "context_insufficient"
 
 
 async def test_judge_context_uses_judge_model_not_synthesis_model():
@@ -74,6 +76,20 @@ async def test_judge_context_empty_chunks_short_circuits_without_request():
         verdict = await judge_context("q", [], client, settings)
 
     assert verdict.verdict == "context_insufficient"
+    assert verdict.raw_response == "(no chunks retrieved)"
+
+
+async def test_judge_context_raw_response_preserves_verbose_content():
+    # raw_response must carry the FULL text, not just the matched substring —
+    # this is what the side panel will render verbatim.
+    settings = Settings(groq_api_key="test-key")
+    verbose = "This context is definitely context_good because it directly answers the question."
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(lambda r: _groq_response(verbose))) as client:
+        verdict = await judge_context("q", [_chunk("c1", "x")], client, settings)
+
+    assert verdict.verdict == "context_good"
+    assert verdict.raw_response == verbose
 
 
 async def test_judge_context_raises_without_api_key():

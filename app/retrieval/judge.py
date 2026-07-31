@@ -18,6 +18,7 @@ JUDGE_SYSTEM_PROMPT = (
 
 class JudgeVerdict(BaseModel):
     verdict: Literal["context_good", "context_insufficient"]
+    raw_response: str
 
 
 class JudgeError(Exception):
@@ -35,7 +36,7 @@ async def judge_context(
     settings: Settings = default_settings,
 ) -> JudgeVerdict:
     if not chunks:
-        return JudgeVerdict(verdict="context_insufficient")
+        return JudgeVerdict(verdict="context_insufficient", raw_response="(no chunks retrieved)")
 
     if not settings.groq_api_key:
         raise JudgeError("GROQ_API_KEY is not configured")
@@ -68,7 +69,7 @@ async def judge_context(
 
     normalized = content.strip().lower()
     if "insufficient" in normalized:
-        return JudgeVerdict(verdict="context_insufficient")
+        return JudgeVerdict(verdict="context_insufficient", raw_response=content)
     if "good" in normalized:
-        return JudgeVerdict(verdict="context_good")
+        return JudgeVerdict(verdict="context_good", raw_response=content)
     raise JudgeError(f"judge response did not contain a recognizable verdict: {content!r}")

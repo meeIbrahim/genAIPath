@@ -26,8 +26,8 @@ async def _judge_safely(
 ) -> JudgeVerdict:
     try:
         return await judge_context(query, chunks, http_client, settings)
-    except JudgeError:
-        return JudgeVerdict(verdict="context_insufficient")
+    except JudgeError as exc:
+        return JudgeVerdict(verdict="context_insufficient", raw_response=f"(judge error: {exc})")
 
 
 def build_retrieval_router(
