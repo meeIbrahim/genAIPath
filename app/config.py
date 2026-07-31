@@ -23,6 +23,7 @@ class Settings:
     groq_model: str = "openai/gpt-oss-120b"
     groq_base_url: str = "https://api.groq.com/openai/v1"
     groq_api_key: str = field(default_factory=lambda: os.environ.get("GROQ_API_KEY", ""))
+    judge_model: str = "llama-3.1-8b-instant"
 
 
 settings = Settings()
