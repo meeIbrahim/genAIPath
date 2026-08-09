@@ -71,6 +71,8 @@ def scan_archive(archive_dir: Path = Path("archive")) -> list[ArchiveDoc]: ...
 ```
 Lists PDFs in `archive/`, computes `doc_id_hash` per file. Missing/empty directory returns `[]`, not an error.
 
+**Correction to an assumption made earlier in this spec:** `app/ingestion/extractor.py::extract_main_text()` parses **HTML** (trafilatura/readability/BeautifulSoup) — it cannot read PDF binary content, and no PDF-text library exists anywhere in `pyproject.toml` today (`archive/` was never wired into any code path). This spec adds `pypdf` (pure-Python, no native deps, MIT-licensed) as a new dependency and a new `app/archive/pdf_extractor.py::extract_pdf_text(path: Path) -> str` module, used by the loader to turn each `ArchiveDoc` into plain text before chunking. `extract_main_text()` is unaffected and stays exactly where it is — it was never applicable to this flow.
+
 ### 2. New: `app/indexing/strategies/`
 One module per strategy, common signature:
 ```python
@@ -100,7 +102,7 @@ Same pattern: `bm25_only.py`, `semantic_only.py`, `hybrid_rrf.py` (today's `retr
 - `/query`'s router constructor now takes the `IndexingCollectionRegistry` + `ACTIVE_PIPELINE` accessor instead of a single fixed `bm25_index`/`vector_index` pair.
 
 ### 7. Deletions
-- `app/ingestion/fetcher.py`, `pagination.py`, `job_store.py`, `worker.py`, and the URL-crawl parts of `app/ingestion/router.py` (PDF-text-extraction in `extractor.py` is kept — reused by the archive scanner's per-doc text extraction).
+- `app/ingestion/fetcher.py`, `pagination.py`, `job_store.py`, `worker.py`, and the URL-crawl parts of `app/ingestion/router.py`. `app/ingestion/extractor.py` (HTML extraction) is unrelated to archive PDF ingestion and is also deleted — nothing in the new flow parses HTML.
 - `app/retrieval/judge.py`; `JudgeAttempt`/`judge_attempts` fields off `app/retrieval/models.py::QueryResponse`; judge-call sites and retry-on-insufficient logic in `app/retrieval/router.py`; the judge side panel in `app/static/js/query.js` / `query.html`.
 - Corresponding tests: `tests/ingestion/test_fetcher.py`, `test_pagination.py`, `test_job_store.py`, `test_worker.py`'s fetch cases, `tests/retrieval/test_judge.py`.
 
