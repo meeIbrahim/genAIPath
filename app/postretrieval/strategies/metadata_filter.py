@@ -4,10 +4,7 @@ from app.extraction.preferences import QueryPreferences
 from app.retrieval.models import FusedChunk
 
 
-def filter_chunks(
-    fused_chunks: list[FusedChunk],
-    preferences: QueryPreferences,
-) -> tuple[list[FusedChunk], int]:
+def apply(fused_chunks: list[FusedChunk], preferences: QueryPreferences) -> tuple[list[FusedChunk], int]:
     kept = [chunk for chunk in fused_chunks if not _conflicts(chunk, preferences)]
     return kept, len(fused_chunks) - len(kept)
 
