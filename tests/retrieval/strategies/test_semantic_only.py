@@ -8,7 +8,7 @@ from app.indexing.vector_index import QdrantVectorIndex
 from app.retrieval.strategies.semantic_only import search
 
 
-async def test_semantic_only_ignores_bm25_index_and_has_no_bm25_score(tmp_path):
+async def test_semantic_only_ignores_bm25_index_and_has_no_bm25_score(tmp_path, monkeypatch):
     settings = Settings(qdrant_path=str(tmp_path / "qdrant"), qdrant_collection="t", vector_size=2)
     bm25 = InMemoryBM25Index()
     vectors = QdrantVectorIndex(settings)
@@ -20,9 +20,12 @@ async def test_semantic_only_ignores_bm25_index_and_has_no_bm25_score(tmp_path):
         chunk_index=0, char_start=0, char_end=20, overlap_with_prev=0,
         indexed_at="2026-07-29T12:00:00+00:00", text="the quick brown fox",
     )
-    # Deliberately do NOT add this chunk to bm25, to prove bm25 is never consulted.
     vectors.upsert([chunk_id], [[1.0, 0.0]], [chunk.model_dump()])
     store.add([chunk])
+
+    def _fail_if_called(*args, **kwargs):
+        raise AssertionError("semantic_only must not call bm25_index.search")
+    monkeypatch.setattr(bm25, "search", _fail_if_called)
 
     def handler(request):
         return httpx.Response(200, json={"embeddings": [[1.0, 0.0]]})
