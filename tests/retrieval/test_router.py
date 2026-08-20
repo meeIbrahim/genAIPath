@@ -77,6 +77,37 @@ def test_query_uses_active_pipeline_returns_answer_with_citations_and_chunks(tmp
     set_active(None)
 
 
+def test_query_with_unimplemented_post_retrieval_strategy_returns_501(tmp_path):
+    set_active(None)
+    settings = _settings(tmp_path, qdrant_collection="t_cer")
+    registry = IndexingCollectionRegistry(settings)
+    collection = registry.get("fixed_window")
+
+    chunk_id = "55555555-5555-5555-5555-555555555555"
+    chunk = ChunkMetadata(
+        chunk_id=chunk_id, doc_id="d1", doc_id_hash="h1", source_url="paper.pdf", page_number=1,
+        chunk_index=0, char_start=0, char_end=20, overlap_with_prev=0,
+        indexed_at="2026-07-29T12:00:00+00:00", text="the quick brown fox",
+    )
+    collection.bm25_index.add_documents([chunk_id], ["the quick brown fox"])
+    collection.vector_index.upsert([chunk_id], [[1.0, 0.0]], [chunk.model_dump()])
+    collection.chunk_store.add([chunk])
+
+    set_active(PipelineConfig(indexing_strategy="fixed_window", retrieval_strategy="hybrid_rrf", post_retrieval_strategy="cross_encoder_rerank"))
+
+    embedding_client = httpx.AsyncClient(transport=httpx.MockTransport(_embed_handler))
+    synthesis_client = httpx.AsyncClient(transport=httpx.MockTransport(_embed_handler))
+    app = FastAPI()
+    app.include_router(build_retrieval_router(registry, embedding_client, synthesis_client, settings))
+
+    with TestClient(app) as client:
+        response = client.post("/query", json={"query": "tell me about the fox"})
+
+    assert response.status_code == 501
+    registry.close_all()
+    set_active(None)
+
+
 def test_query_includes_preferences_and_filtered_out_count_with_metadata_filter_strategy(tmp_path):
     set_active(None)
     settings = _settings(tmp_path, qdrant_collection="t2")

@@ -37,7 +37,10 @@ def build_retrieval_router(
             request.query, collection.bm25_index, collection.vector_index, collection.chunk_store,
             embedding_client, settings, request.top_k,
         )
-        kept_chunks, filtered_out_count = post_retrieval_fn(fused_chunks, preferences)
+        try:
+            kept_chunks, filtered_out_count = post_retrieval_fn(fused_chunks, preferences)
+        except NotImplementedError as exc:
+            raise HTTPException(status_code=501, detail=str(exc)) from exc
 
         answer, citations, used_chunk_ids = await synthesize_answer(request.query, kept_chunks, synthesis_client, settings)
         for chunk in kept_chunks:
