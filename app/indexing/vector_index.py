@@ -7,8 +7,10 @@ from app.config import Settings
 
 
 class QdrantVectorIndex:
-    def __init__(self, settings: Settings) -> None:
-        if settings.qdrant_url:
+    def __init__(self, settings: Settings, client: QdrantClient | None = None) -> None:
+        if client is not None:
+            self._client = client
+        elif settings.qdrant_url:
             self._client = QdrantClient(url=settings.qdrant_url)
         else:
             self._client = QdrantClient(path=settings.qdrant_path)
@@ -41,3 +43,18 @@ class QdrantVectorIndex:
             collection_name=self._collection, query=query_vector, limit=top_k
         ).points
         return [(str(point.id), point.score) for point in results]
+
+    def scroll_all(self) -> list[dict]:
+        payloads: list[dict] = []
+        offset = None
+        while True:
+            points, offset = self._client.scroll(
+                collection_name=self._collection, limit=256, with_payload=True, with_vectors=False, offset=offset
+            )
+            payloads.extend(point.payload for point in points)
+            if offset is None:
+                break
+        return payloads
+
+    def close(self) -> None:
+        self._client.close()
