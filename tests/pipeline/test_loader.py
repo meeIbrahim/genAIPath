@@ -145,15 +145,17 @@ async def test_load_pipeline_serializes_concurrent_calls(tmp_path, monkeypatch):
     config = _config()
 
     concurrent = {"active": 0, "max": 0}
+    real_index_chunks = loader_module.index_chunks
 
-    async def slow_embed(client, texts, settings):
+    async def slow_index_chunks(*args, **kwargs):
         concurrent["active"] += 1
         concurrent["max"] = max(concurrent["max"], concurrent["active"])
         await asyncio.sleep(0.05)
+        result = await real_index_chunks(*args, **kwargs)
         concurrent["active"] -= 1
-        return [[0.1, 0.2] for _ in texts]
+        return result
 
-    monkeypatch.setattr(loader_module, "embed_texts", slow_embed)
+    monkeypatch.setattr(loader_module, "index_chunks", slow_index_chunks)
 
     client = _embed_client()
     await asyncio.gather(

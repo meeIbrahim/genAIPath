@@ -8,7 +8,6 @@ import httpx
 from app.archive.pdf_extractor import PdfExtractionError, extract_pdf_text
 from app.archive.scanner import scan_archive
 from app.config import Settings, settings as default_settings
-from app.indexing.embeddings import embed_texts
 from app.indexing.indexer import index_chunks
 from app.indexing.strategies import INDEXING_STRATEGIES
 from app.pipeline.config import PipelineConfig, set_active
@@ -42,11 +41,6 @@ async def load_pipeline(
             try:
                 text = extract_pdf_text(Path(doc.path))
                 text_chunks = chunk_fn(text, settings)
-                if text_chunks:
-                    # Fail-fast embeddability check under the same lock that serializes
-                    # load_pipeline calls; also the seam index_chunks' internal embedding
-                    # step is verified against in tests.
-                    await embed_texts(http_client, [chunk.text for chunk in text_chunks], settings)
                 await index_chunks(
                     text_chunks, doc.filename, doc.doc_id_hash,
                     collection.bm25_index, collection.vector_index, collection.chunk_store,
