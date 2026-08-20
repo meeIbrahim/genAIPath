@@ -13,7 +13,39 @@ from app.retrieval.fusion import RankedHit, reciprocal_rank_fusion
 from app.retrieval.models import FusedChunk
 
 
-async def retrieve(
+def assemble(
+    bm25_hits: list[RankedHit],
+    semantic_hits: list[RankedHit],
+    chunk_store: ChunkStore,
+    settings: Settings,
+    display_top_k: int,
+) -> list[FusedChunk]:
+    fused_hits = reciprocal_rank_fusion(bm25_hits, semantic_hits, settings.rrf_k, display_top_k)
+    metadata_by_id = {
+        chunk.chunk_id: chunk for chunk in chunk_store.get_many([hit.chunk_id for hit in fused_hits])
+    }
+    return [
+        FusedChunk(
+            chunk_id=hit.chunk_id,
+            text=metadata_by_id[hit.chunk_id].text,
+            source_url=metadata_by_id[hit.chunk_id].source_url,
+            page_number=metadata_by_id[hit.chunk_id].page_number,
+            city=metadata_by_id[hit.chunk_id].city,
+            price=metadata_by_id[hit.chunk_id].price,
+            bm25_rank=hit.bm25_rank,
+            bm25_score=hit.bm25_score,
+            semantic_rank=hit.semantic_rank,
+            semantic_score=hit.semantic_score,
+            fused_rank=hit.fused_rank,
+            rrf_score=hit.rrf_score,
+            matched_methods=hit.matched_methods,
+        )
+        for hit in fused_hits
+        if hit.chunk_id in metadata_by_id
+    ]
+
+
+async def search(
     query: str,
     bm25_index: InMemoryBM25Index,
     vector_index: QdrantVectorIndex,
@@ -34,28 +66,4 @@ async def retrieve(
         return [RankedHit(chunk_id, rank + 1, score) for rank, (chunk_id, score) in enumerate(results)]
 
     bm25_hits, semantic_hits = await asyncio.gather(bm25_search(), semantic_search())
-    fused_hits = reciprocal_rank_fusion(bm25_hits, semantic_hits, settings.rrf_k, display_top_k)
-
-    metadata_by_id = {
-        chunk.chunk_id: chunk for chunk in chunk_store.get_many([hit.chunk_id for hit in fused_hits])
-    }
-
-    return [
-        FusedChunk(
-            chunk_id=hit.chunk_id,
-            text=metadata_by_id[hit.chunk_id].text,
-            source_url=metadata_by_id[hit.chunk_id].source_url,
-            page_number=metadata_by_id[hit.chunk_id].page_number,
-            city=metadata_by_id[hit.chunk_id].city,
-            price=metadata_by_id[hit.chunk_id].price,
-            bm25_rank=hit.bm25_rank,
-            bm25_score=hit.bm25_score,
-            semantic_rank=hit.semantic_rank,
-            semantic_score=hit.semantic_score,
-            fused_rank=hit.fused_rank,
-            rrf_score=hit.rrf_score,
-            matched_methods=hit.matched_methods,
-        )
-        for hit in fused_hits
-        if hit.chunk_id in metadata_by_id
-    ]
+    return assemble(bm25_hits, semantic_hits, chunk_store, settings, display_top_k)
