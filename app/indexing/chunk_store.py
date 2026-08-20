@@ -20,3 +20,6 @@ class ChunkStore:
 
     def get_many(self, chunk_ids: list[str]) -> list[ChunkMetadata]:
         return [self._chunks[chunk_id] for chunk_id in chunk_ids if chunk_id in self._chunks]
+
+    def doc_id_hashes(self) -> set[str]:
+        return {chunk.doc_id_hash for chunk in self._chunks.values()}

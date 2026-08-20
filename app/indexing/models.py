@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class ChunkMetadata(BaseModel):
     chunk_id: str
     doc_id: str
+    doc_id_hash: str = ""
     source_url: str
     page_number: int
     chunk_index: int
