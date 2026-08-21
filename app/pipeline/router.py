@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import httpx
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.config import Settings, settings as default_settings
 from app.pipeline.config import PipelineConfig, get_active
@@ -19,7 +19,10 @@ def build_pipeline_router(
 
     @router.post("/pipeline/load", response_model=PipelineLoadResult)
     async def load(config: PipelineConfig) -> PipelineLoadResult:
-        return await load_pipeline(config, registry, http_client, settings)
+        try:
+            return await load_pipeline(config, registry, http_client, settings)
+        except NotImplementedError as exc:
+            raise HTTPException(status_code=501, detail=str(exc)) from exc
 
     @router.get("/pipeline/status", response_model=PipelineStatus)
     async def status() -> PipelineStatus:

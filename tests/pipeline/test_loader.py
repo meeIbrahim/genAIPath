@@ -7,6 +7,7 @@ import pytest
 
 import app.pipeline.loader as loader_module
 from app.config import Settings
+from app.indexing.models import IndexResult
 from app.pipeline.config import PipelineConfig, get_active, set_active
 from app.pipeline.loader import load_pipeline
 from app.pipeline.registry import IndexingCollectionRegistry
@@ -135,6 +136,75 @@ async def test_load_pipeline_empty_archive_returns_zero_without_error(tmp_path):
 
     assert result.indexed.new_docs == 0
     assert result.indexed.total_docs == 0
+
+
+async def test_load_pipeline_propagates_not_implemented_for_stub_indexing_strategy(tmp_path, monkeypatch):
+    monkeypatch.setattr(loader_module, "extract_pdf_text", lambda path: "one two three. four five six.")
+    settings = _settings(tmp_path)
+    registry = IndexingCollectionRegistry(settings)
+    archive_dir = _make_archive(tmp_path, ["a.pdf"])
+    config = _config(indexing_strategy="semantic")
+
+    client = _embed_client()
+    with pytest.raises(NotImplementedError):
+        await load_pipeline(config, registry, client, settings, archive_dir=archive_dir)
+    await client.aclose()
+    registry.close_all()
+
+    assert get_active() is None
+
+
+async def test_load_pipeline_records_zero_chunk_doc_as_failure_and_retries_it_next_time(tmp_path, monkeypatch):
+    monkeypatch.setattr(loader_module, "extract_pdf_text", lambda path: "one two three. four five six.")
+
+    async def empty_index_chunks(*args, **kwargs):
+        return IndexResult(doc_id="d0", status="indexed", chunk_count=0)
+
+    monkeypatch.setattr(loader_module, "index_chunks", empty_index_chunks)
+
+    settings = _settings(tmp_path)
+    registry = IndexingCollectionRegistry(settings)
+    archive_dir = _make_archive(tmp_path, ["blank.pdf"])
+    config = _config()
+
+    client = _embed_client()
+    first = await load_pipeline(config, registry, client, settings, archive_dir=archive_dir)
+    second = await load_pipeline(config, registry, client, settings, archive_dir=archive_dir)
+    await client.aclose()
+    registry.close_all()
+
+    assert first.indexed.new_docs == 0
+    assert first.indexed.total_docs == 0
+    assert len(first.indexed.failures) == 1
+    assert first.indexed.failures[0].path.endswith("blank.pdf")
+    assert first.indexed.failures[0].error == "no extractable chunks"
+
+    # The doc's hash was never stored, so the next Load must retry it rather than
+    # silently skipping it or counting it as already-indexed.
+    assert second.indexed.new_docs == 0
+    assert len(second.indexed.failures) == 1
+    assert second.indexed.failures[0].path.endswith("blank.pdf")
+
+
+async def test_load_pipeline_dedupes_identical_content_within_one_batch(tmp_path, monkeypatch):
+    monkeypatch.setattr(loader_module, "extract_pdf_text", lambda path: "one two three. four five six.")
+    settings = _settings(tmp_path)
+    registry = IndexingCollectionRegistry(settings)
+
+    archive_dir = tmp_path / "archive"
+    archive_dir.mkdir()
+    (archive_dir / "original.pdf").write_bytes(b"identical bytes")
+    (archive_dir / "copy.pdf").write_bytes(b"identical bytes")
+    config = _config()
+
+    client = _embed_client()
+    result = await load_pipeline(config, registry, client, settings, archive_dir=archive_dir)
+    await client.aclose()
+    registry.close_all()
+
+    assert result.indexed.new_docs == 1
+    assert result.indexed.total_docs == 1
+    assert result.indexed.failures == []
 
 
 async def test_load_pipeline_serializes_concurrent_calls(tmp_path, monkeypatch):

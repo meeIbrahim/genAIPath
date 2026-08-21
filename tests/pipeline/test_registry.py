@@ -35,6 +35,29 @@ def test_registry_isolates_strategies_from_each_other(tmp_path):
     registry.close_all()
 
 
+def test_doc_count_counts_docs_not_chunks(tmp_path):
+    registry = IndexingCollectionRegistry(_settings(tmp_path))
+    fixed = registry.get("fixed_window")
+
+    chunks = [
+        ChunkMetadata(
+            chunk_id=str(uuid.uuid4()), doc_id="d1", doc_id_hash="same-doc", source_url="a.pdf", page_number=1,
+            chunk_index=index, char_start=index * 10, char_end=(index + 1) * 10, overlap_with_prev=0,
+            indexed_at="2026-08-09T00:00:00+00:00", text=f"chunk {index} of the quick brown fox",
+        )
+        for index in range(2)
+    ]
+    fixed.vector_index.upsert(
+        [chunk.chunk_id for chunk in chunks], [[1.0, 0.0], [0.0, 1.0]],
+        [chunk.model_dump() for chunk in chunks],
+    )
+    fixed.chunk_store.add(chunks)
+
+    assert len(fixed.chunk_store._chunks) == 2
+    assert registry.doc_count("fixed_window") == 1  # two chunks, one doc
+    registry.close_all()
+
+
 def test_registry_rehydrates_chunk_store_and_bm25_from_persisted_qdrant_data(tmp_path):
     settings = _settings(tmp_path)
     first_registry = IndexingCollectionRegistry(settings)

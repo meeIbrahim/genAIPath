@@ -43,6 +43,25 @@ async def test_index_chunks_writes_to_both_indexes_and_chunk_store(tmp_path):
     assert len(vectors.search([0.1, 0.2, 0.3], top_k=5)) == 2
 
 
+async def test_index_chunks_returns_zero_and_writes_nothing_for_empty_input(tmp_path):
+    settings = _settings(tmp_path)
+    bm25 = InMemoryBM25Index()
+    vectors = QdrantVectorIndex(settings)
+    store = ChunkStore()
+
+    def handler(request):  # pragma: no cover - must never be reached
+        raise AssertionError("embeddings should not be requested for an empty chunk list")
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        result = await index_chunks([], "source.pdf", "somehash", bm25, vectors, store, client, settings)
+
+    assert result.chunk_count == 0
+    assert result.status == "indexed"
+    assert bm25._chunk_ids == []
+    assert store._chunks == {}
+    assert store.doc_id_hashes() == set()
+
+
 async def test_index_chunks_tags_city_and_price(tmp_path):
     settings = _settings(tmp_path)
     bm25 = InMemoryBM25Index()
