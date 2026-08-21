@@ -22,6 +22,19 @@ def test_scan_archive_lists_pdfs_with_stable_hash(tmp_path):
     assert len({doc.doc_id_hash for doc in first_scan}) == 2
 
 
+def test_scan_archive_matches_pdf_extension_case_insensitively(tmp_path):
+    archive_dir = tmp_path / "archive"
+    archive_dir.mkdir()
+    (archive_dir / "lower.pdf").write_bytes(b"pdf-content-lower")
+    (archive_dir / "UPPER.PDF").write_bytes(b"pdf-content-upper")
+    (archive_dir / "Mixed.Pdf").write_bytes(b"pdf-content-mixed")
+    (archive_dir / "notes.txt").write_bytes(b"ignore me")
+
+    docs = scan_archive(archive_dir)
+
+    assert {doc.filename for doc in docs} == {"lower.pdf", "UPPER.PDF", "Mixed.Pdf"}
+
+
 def test_scan_archive_hash_changes_when_file_content_changes(tmp_path):
     archive_dir = tmp_path / "archive"
     archive_dir.mkdir()
