@@ -22,7 +22,6 @@ def _embed_handler(request):
 
 
 def test_query_without_active_pipeline_returns_400(tmp_path):
-    set_active(None)
     settings = _settings(tmp_path)
     registry = IndexingCollectionRegistry(settings)
     embedding_client = httpx.AsyncClient(transport=httpx.MockTransport(_embed_handler))
@@ -38,7 +37,6 @@ def test_query_without_active_pipeline_returns_400(tmp_path):
 
 
 def test_query_uses_active_pipeline_returns_answer_with_citations_and_chunks(tmp_path):
-    set_active(None)
     settings = _settings(tmp_path)
     registry = IndexingCollectionRegistry(settings)
     collection = registry.get("fixed_window")
@@ -74,11 +72,9 @@ def test_query_uses_active_pipeline_returns_answer_with_citations_and_chunks(tmp
     assert body["retrieved_chunks"][0]["used_in_synthesis"] is True
     assert "judge_attempts" not in body
     registry.close_all()
-    set_active(None)
 
 
 def test_query_with_unimplemented_post_retrieval_strategy_returns_501(tmp_path):
-    set_active(None)
     settings = _settings(tmp_path, qdrant_collection="t_cer")
     registry = IndexingCollectionRegistry(settings)
     collection = registry.get("fixed_window")
@@ -105,11 +101,9 @@ def test_query_with_unimplemented_post_retrieval_strategy_returns_501(tmp_path):
 
     assert response.status_code == 501
     registry.close_all()
-    set_active(None)
 
 
 def test_query_includes_preferences_and_filtered_out_count_with_metadata_filter_strategy(tmp_path):
-    set_active(None)
     settings = _settings(tmp_path, qdrant_collection="t2")
     registry = IndexingCollectionRegistry(settings)
     collection = registry.get("fixed_window")
@@ -152,11 +146,9 @@ def test_query_includes_preferences_and_filtered_out_count_with_metadata_filter_
     assert body["filtered_out_count"] == 1
     assert [c["chunk_id"] for c in body["retrieved_chunks"]] == [kept_id]
     registry.close_all()
-    set_active(None)
 
 
 def test_query_default_settings_marks_overflow_chunks_not_used_in_synthesis(tmp_path):
-    set_active(None)
     settings = _settings(tmp_path, qdrant_collection="t3")
     assert settings.display_top_k == 8
     assert settings.synthesis_context_budget == 6
@@ -200,4 +192,3 @@ def test_query_default_settings_marks_overflow_chunks_not_used_in_synthesis(tmp_
     assert used_flags[:6] == [True] * 6
     assert used_flags[6:] == [False] * 2
     registry.close_all()
-    set_active(None)

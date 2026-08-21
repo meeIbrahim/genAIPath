@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 
 import app.pipeline.loader as loader_module
 from app.config import Settings
-from app.pipeline.config import get_active, set_active
 from app.pipeline.registry import IndexingCollectionRegistry
 from app.pipeline.router import build_pipeline_router
 
@@ -23,7 +22,6 @@ def _embed_client() -> httpx.AsyncClient:
 
 
 def test_pipeline_status_before_any_load(tmp_path):
-    set_active(None)
     settings = _settings(tmp_path)
     registry = IndexingCollectionRegistry(settings)
     app = FastAPI()
@@ -40,7 +38,6 @@ def test_pipeline_status_before_any_load(tmp_path):
 
 
 def test_pipeline_load_then_status_reflects_active_config(tmp_path, monkeypatch):
-    set_active(None)
     monkeypatch.setattr(loader_module, "extract_pdf_text", lambda path: "one two three. four five six.")
     settings = _settings(tmp_path)
     registry = IndexingCollectionRegistry(settings)
@@ -66,11 +63,9 @@ def test_pipeline_load_then_status_reflects_active_config(tmp_path, monkeypatch)
     }
     assert status_response.json()["doc_counts"]["fixed_window"] == 1
     registry.close_all()
-    set_active(None)
 
 
 def test_pipeline_load_rejects_unknown_strategy_id(tmp_path):
-    set_active(None)
     settings = _settings(tmp_path)
     registry = IndexingCollectionRegistry(settings)
     app = FastAPI()
