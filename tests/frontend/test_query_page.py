@@ -7,11 +7,7 @@ from app.main import create_app
 
 
 def _isolated_settings(tmp_path) -> Settings:
-    return Settings(
-        qdrant_path=str(tmp_path / "qdrant"),
-        qdrant_collection=f"test-{uuid.uuid4()}",
-        vector_size=2,
-    )
+    return Settings(qdrant_path=str(tmp_path / "qdrant"), qdrant_collection=f"test-{uuid.uuid4()}", vector_size=2)
 
 
 def test_query_page_served(tmp_path):
@@ -23,4 +19,4 @@ def test_query_page_served(tmp_path):
     assert '/static/js/query.js' in response.text
     assert 'id="preferences"' in response.text
     assert 'id="filtered-note"' in response.text
-    assert 'id="judge-panel"' in response.text
+    assert 'id="judge-panel"' not in response.text

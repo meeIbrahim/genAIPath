@@ -27,6 +27,6 @@ def test_shared_api_js_is_served(tmp_path):
     with TestClient(app) as client:
         response = client.get("/static/js/api.js")
     assert response.status_code == 200
-    assert "function postIngest" in response.text
-    assert "function getIngestStatus" in response.text
+    assert "function getPipelineStatus" in response.text
     assert "function postQuery" in response.text
+    assert "function postIngest" not in response.text

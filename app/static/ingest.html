@@ -7,11 +7,9 @@
 </head>
 <body>
   <nav><a href="/">Ingest</a><a href="/query-ui">Query</a></nav>
-  <h1>Ingest URLs</h1>
-  <div id="url-rows"></div>
-  <button id="add-row">Add URL</button>
-  <button id="submit">Start Ingest</button>
-  <div id="progress"></div>
+  <h1>Archive</h1>
+  <p>PDFs are read from the local <code>archive/</code> folder and indexed per strategy via <code>POST /pipeline/load</code>. This screen shows current indexed status per strategy.</p>
+  <div id="doc-counts"></div>
 
   <script src="/static/js/api.js"></script>
   <script src="/static/js/ingest.js"></script>
