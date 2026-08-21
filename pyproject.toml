@@ -5,21 +5,17 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "beautifulsoup4>=4.15.0",
     "fastapi>=0.140.13",
     "httpx>=0.28.1",
     "langchain>=0.3.30",
     "langchain-anthropic>=0.3.22",
     "langchain-community>=0.3.31",
-    "lxml>=6.1.1",
     "pydantic>=2.13.4",
     "pypdf>=6.16.1",
     "qdrant-client>=1.16.1",
     "rank-bm25>=0.2.2",
-    "readability-lxml>=0.8.4.1",
     "spacy>=3.7.0",
     "tiktoken>=0.13.0",
-    "trafilatura>=2.1.0",
     "uvicorn[standard]>=0.52.0",
 ]
 
