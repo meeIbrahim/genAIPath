@@ -35,6 +35,8 @@ async def index_chunks(
             doc_id=doc_id,
             doc_id_hash=doc_id_hash,
             source_url=source_name,
+            # TODO(piece B): PDF page boundaries aren't tracked through chunking strategies yet;
+            # every chunk reports page 1. Deliberate simplification, not a bug.
             page_number=1,
             chunk_index=index,
             char_start=text_chunk.char_start,

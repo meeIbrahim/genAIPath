@@ -1,3 +1,5 @@
+> **Note:** This document describes a subsystem removed in the pipeline-architecture rework — see docs/superpowers/specs/2026-08-09-pipeline-architecture-design.md for the current design.
+
 # RAG ingestion subsystem — architecture spec
 
 ## Scope

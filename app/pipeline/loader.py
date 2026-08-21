@@ -19,6 +19,11 @@ DEFAULT_ARCHIVE_DIR = Path("archive")
 _load_lock = asyncio.Lock()
 
 
+def run_gold_eval(config: PipelineConfig) -> EvalResult:
+    """Seam for piece C: run the gold-set evaluation for a freshly loaded pipeline."""
+    return EvalResult(status="not_implemented")
+
+
 async def load_pipeline(
     config: PipelineConfig,
     registry: IndexingCollectionRegistry,
@@ -79,5 +84,5 @@ async def load_pipeline(
                 total_docs=len(collection.chunk_store.doc_id_hashes()),
                 failures=failures,
             ),
-            eval=EvalResult(status="not_implemented"),
+            eval=run_gold_eval(config),
         )

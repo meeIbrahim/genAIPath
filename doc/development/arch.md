@@ -1,3 +1,5 @@
+> **Note:** This document describes subsystems removed in the pipeline-architecture rework (URL-crawl ingestion, the Judge, `/index/chunk`) — see docs/superpowers/specs/2026-08-09-pipeline-architecture-design.md for the current design.
+
 # RAG indexing, retrieval & base system — architecture spec
 
 ## Scope
