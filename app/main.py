@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 import httpx
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
@@ -12,11 +15,16 @@ from app.retrieval.router import build_retrieval_router
 
 
 def create_app(app_settings: Settings = settings) -> FastAPI:
-    app = FastAPI(title="RAG Pipeline Showcase")
-
     registry = IndexingCollectionRegistry(app_settings)
     embedding_client = httpx.AsyncClient()
     synthesis_client = httpx.AsyncClient()
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        yield
+        registry.close_all()
+
+    app = FastAPI(title="RAG Pipeline Showcase", lifespan=lifespan)
 
     app.include_router(build_pipeline_router(registry, embedding_client, app_settings))
     app.include_router(build_retrieval_router(registry, embedding_client, synthesis_client, app_settings))
